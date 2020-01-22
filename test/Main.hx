@@ -1,4 +1,5 @@
-package test;
+package;
+
 class Main {
     static public function main() {
         var a = new BaseClass<String>();
@@ -8,5 +9,8 @@ class Main {
 
         var a:TestInterface<Int> = new TestInterface<Int>();
         trace(a.foo(2));
+
+        var b:TestInterface<String> = new TestInterface<String>();
+        trace(b.foo("I am b"));
     }
 }

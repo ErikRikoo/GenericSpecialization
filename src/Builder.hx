@@ -1,4 +1,5 @@
 package ;
+
 import haxe.macro.Expr;
 import haxe.macro.Type.ClassType;
 import haxe.macro.Expr.TypePath;
@@ -6,57 +7,72 @@ import haxe.macro.Type;
 import haxe.macro.Expr.ComplexType;
 import haxe.macro.Context;
 
+using Util;
+
+typedef SpecializationPair = {
+    specialized:BaseType,
+    specialization:BaseType,
+}
+
 class Builder {
-    macro static public function build(base:Expr, others:Expr):ComplexType {
-        trace("------ Builder Called ------");
-//        trace(base);
-//        trace(others);
-        var type:Null<Type> = Context.getLocalType();
-        var instanceParams:Array<TypeParam>;
-        switch(type) {
-            case TInst(_, p):
-                instanceParams = convert(p);
-            default:
+    macro static public function build(base:Expr, others:Array<Expr>):ComplexType {
+        var instanceParams:Array<Type> = getInstanceParams();
+        var baseClass:BaseType = base.toBaseType();
+        var specializations:Array<SpecializationPair> = parseOthers(others);
 
-        }
-//        trace(type);
-        var baseType:Type;
-        var baseClass:ClassType;
-        var params:Array<Type>;
-        switch(base.expr) {
-            case EConst(CIdent(s)):
-                baseType = Context.getType(s);
-//                trace(baseType);
-                switch(baseType) {
-                    case TInst(cls, p):
-                        baseClass = cls.get();
-                        params = p;
-                    default:
-                }
-            default:
+        var currentSpecialization:BaseType = getCurrentSpecialization(instanceParams[0], specializations);
+        if(currentSpecialization == null) {
+            currentSpecialization = baseClass;
+        } else {
+            instanceParams = [];
         }
 
-//        trace(baseClass);
-//        trace(params);
-        var self:ClassType = Context.getLocalClass().get();
-//        trace(self);
         var tpath:TypePath = {
-            name: baseClass.name,
-            pack : baseClass.pack,
-            params: instanceParams,
+            name: currentSpecialization.name,
+            pack: currentSpecialization.pack,
+            params: convertTypeToTypeParam(instanceParams),
         };
 
         return TPath(tpath);
     }
 
-    private static function convert(params:Array<Type>):Array<TypeParam> {
+    private static function getCurrentSpecialization(currentParams:Type, specializations:Array<SpecializationPair>):BaseType {
+        for(pair in specializations) {
+            if(pair.specialized.equalsByName(currentParams.toBaseType())) {
+                return pair.specialization;
+            }
+        }
+
+        return null;
+    }
+
+    private static function getInstanceParams():Array<Type> {
+        var type:Null<Type> = Context.getLocalType();
+        return switch(type) {
+            case TInst(_, p):
+                return p;
+            default:
+                return null;
+        };
+    }
+
+    private static function convertTypeToTypeParam(params:Array<Type>):Array<TypeParam> {
         var ret:Array<TypeParam> = [];
         for(p in params) {
-            switch(p) {
-                case TAbstract(_.get() => t, _):
-                    ret.push(TPType(TPath({name:t.name, pack:t.pack})));
-                default:
+            var type:BaseType = p.toBaseType();
+            ret.push(TPType(TPath({name:type.name, pack:type.pack})));
+        }
 
+        return ret;
+    }
+
+    private static function parseOthers(others:Array<Expr>):Array<SpecializationPair> {
+        var ret = new Array<SpecializationPair>();
+        for(other in others) {
+            switch(other.expr) {
+                case EBinop(OpArrow, _.toBaseType() => specialized, _.toBaseType() => specialization):
+                    ret.push({specialized: specialized, specialization: specialization});
+                default:
             }
         }
 

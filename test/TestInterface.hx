@@ -1,8 +1,8 @@
-package test;
+package;
 
 @:genericBuild(Builder.build(
     BaseClass,
-    [Int => IntSpecialization, ]
+    Int => IntSpecialization
 ))
 interface TestInterface<T> extends BaseInterface<T> {
 
