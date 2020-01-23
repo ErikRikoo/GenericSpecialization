@@ -1,13 +1,11 @@
 -cp src
 -cp test
 -D analyzer-optimize
---interp
-
 --each
 
--main multiple.Main
+-lib tink_unittest
+-main Main
+--interp
 
---next
 
--main simple.Main
 
