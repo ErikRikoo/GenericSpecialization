@@ -11,6 +11,7 @@ To implement specialization, you need:
 - Any specialization you need
 
 #### Code:
+##### The type that will be used in other functions
 ```haxe
 @:genericBuild(Builder.build(
     BaseClass,
@@ -24,18 +25,21 @@ interface BaseInterface<T, U> {
 }
 ```
 
+##### The base class with no specialization
 ```haxe
 class BaseClass<T, U> implements BaseInterface<T, U> {
     public function new() {}
 }
 ```
 
+##### A complete specialization over Int, Int
 ```haxe
 class CompleteImplementation implements BaseInterface<Int, Int>{
     public function new() {}
 }
 ```
 
+#####A partial specialization over Int as first parameter
 ```haxe
 class PartialImplemenation<U> implements BaseInterface<Int, U>{
     public function new() {}
@@ -47,7 +51,7 @@ As you can see, there is multiple arguments in the @:genericBuild function:
 - A rest list of arguments, items must follow one of those syntaxes:
     - type => specialization type 
     - [(type|_), ...] => specialization type
-        - If a type is given it shuld match with the called type
+        - If a type is given it should match with the called type
         - If _ is given any type will match, we kkep the generic on this one
 
 For now you should always have the fullest list at the top to avoid errors.
