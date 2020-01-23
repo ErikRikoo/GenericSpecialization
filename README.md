@@ -56,4 +56,18 @@ As you can see, there is multiple arguments in the @:genericBuild function:
 
 For now you should always have the fullest list at the top to avoid errors.
 
+#### Exemple with the classes defined above
+```haxe
+class Main {
+    public static function main() {
+        var a = new CalledType<String, String>(); 
+            // Gives BaseClass<String, String>
+        var b = new CalledType<Int, String>();    
+            // Gives PartialImplementation<String>
+        vac c = new CalledType<Int, Int>();
+            // Gives CompleteImplementation    
+    }
+}
+```
+
 ## To Do
