@@ -11,10 +11,6 @@ using Util.ArrayUtil;
 using Util.StringUtil;
 using Util.ExprUtil;
 
-class Util {
-
-}
-
 class ArrayUtil {
     public static function deepEqual<T>(a:Array<T>, b:Array<T>) {
         if(a.length != b.length) {
