@@ -34,11 +34,7 @@ class Builder {
         var instanceParams:Array<BaseType> = getInstanceParams();
         var baseClass:BaseType = base.toBaseType();
         var specializations:Array<SpecializationPair> = parseOthers(others);
-
-        getSpecialization(instanceParams, specializations, baseClass);
-
         var tpath:TypePath = getSpecialization(instanceParams, specializations, baseClass);
-
         return TPath(tpath);
     }
 
@@ -87,8 +83,7 @@ class Builder {
     }
 
     private static function getInstanceParams():Array<BaseType> {
-        var type:Null<Type> = Context.getLocalType();
-        return switch(type) {
+        return switch(Context.getLocalType()) {
             case TInst(_, p):
                 return p.map((t:Type) -> t.toBaseType());
             default:
@@ -107,14 +102,12 @@ class Builder {
         for(other in others) {
             switch(other.expr) {
                 case EBinop(OpArrow, left, _.toBaseType() => specialization):
-                    var specialized:Array<Mask> = [];
+                    var specialized:Array<Mask>;
                     switch(left.expr) {
-                        case EConst(CIdent(s)):
-                            specialized.push(Typed(s.toBaseType()));
+                        case EConst(CIdent(_.toBaseType() => t)):
+                            specialized = [Typed(t)];
                         case EArrayDecl(values):
-//                            trace(values);
-                            specialized.append(toMask(values));
-//                            specialized.append(values.toBaseType());
+                            specialized = toMask(values);
                         default:
 
                     }
