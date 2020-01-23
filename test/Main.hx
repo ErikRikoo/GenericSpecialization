@@ -1,5 +1,6 @@
 package ;
 
+import partial.PartialTest;
 import simple.SimpleTest;
 import multiple.MultipleTest;
 import tink.unit.*;
@@ -10,6 +11,7 @@ class Main {
         Runner.run(TestBatch.make([
             new SimpleTest(),
             new MultipleTest(),
+            new PartialTest(),
         ]));
     }
 }
