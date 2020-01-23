@@ -11,10 +11,6 @@ using Util.ArrayUtil;
 using Util.StringUtil;
 using Util.ExprUtil;
 
-class Util {
-
-}
-
 class ArrayUtil {
     public static function deepEqual<T>(a:Array<T>, b:Array<T>) {
         if(a.length != b.length) {
@@ -29,28 +25,9 @@ class ArrayUtil {
 
         return true;
     }
-
-    public static function toBaseType(a:Array<Expr>) {
-        return a.map((e:Expr) -> e.toBaseType());
-    }
-
-    public static function append<T>(a:Array<T>, b:Array<T>) {
-        for(item in b) {
-            a.push(item);
-        }
-    }
 }
 
 class TypeUtil {
-    public static function toClassType(input:Type):ClassType {
-        switch(input) {
-            case TInst(_.get() => cls, _):
-                return cls;
-            default:
-                throw "The given type is not a class instance, type = " + input;
-        }
-    }
-
     public static function toBaseType(input:Type):BaseType {
         switch(input) {
             case TInst(_.get() => cls, _):
@@ -65,15 +42,6 @@ class TypeUtil {
 
 
 class ExprUtil {
-    public static function toClassType(input:Expr):ClassType {
-        switch(input.expr) {
-            case EConst(CIdent(s)):
-                return Context.getType(s).toClassType();
-            default:
-                throw "The given expr is not an identifier, expr = " + input;
-        }
-    }
-
     public static function toBaseType(input:Expr):BaseType {
         switch(input.expr) {
             case EConst(CIdent(s)):
@@ -86,7 +54,6 @@ class ExprUtil {
 
 class BaseTypeUtil {
     public static function equalsByName(self:BaseType, other:BaseType):Bool {
-
         return self.name == other.name && self.pack.deepEqual(other.pack);
     }
 }

@@ -10,70 +10,90 @@ import haxe.macro.Context;
 using Util;
 
 typedef SpecializationPair = {
-    specialized:Array<BaseType>,
+    specialized:Array<Mask>,
     specialization:BaseType,
+}
+
+typedef GenericType = {
+    type:BaseType,
+    params:Array<BaseType>
+}
+
+enum Mask {
+    Typed(t:BaseType);
+    AnyType();
+}
+
+enum ReturnValue<T> {
+    Value(v:T);
+    Invalid();
 }
 
 class Builder {
     macro static public function build(base:Expr, others:Array<Expr>):ComplexType {
-        var instanceParams:Array<Type> = getInstanceParams();
+        var instanceParams:Array<BaseType> = getInstanceParams();
         var baseClass:BaseType = base.toBaseType();
         var specializations:Array<SpecializationPair> = parseOthers(others);
-
-        var currentSpecialization:BaseType = getCurrentSpecialization(instanceParams, specializations);
-        if(currentSpecialization == null) {
-            currentSpecialization = baseClass;
-        } else {
-            instanceParams = [];
-        }
-
-        var tpath:TypePath = {
-            name: currentSpecialization.name,
-            pack: currentSpecialization.pack,
-            params: convertTypeToTypeParam(instanceParams),
-        };
-
+        var tpath:TypePath = getSpecialization(instanceParams, specializations, baseClass);
         return TPath(tpath);
     }
 
-    private static function getCurrentSpecialization(currentParams:Array<Type>, specializations:Array<SpecializationPair>):BaseType {
+    private static function getSpecialization(
+        currentParams:Array<BaseType>, specializations:Array<SpecializationPair>,
+        base:BaseType
+        ):TypePath {
         for(pair in specializations) {
-            if(hasMatching(pair.specialized, currentParams)) {
-                return pair.specialization;
+            switch(getMatching(pair.specialized, currentParams)) {
+                case Value(p):
+                    return {
+                        name: pair.specialization.name,
+                        pack: pair.specialization.pack,
+                        params: convertTypeToTypeParam(p),
+                    }
+                default:
             }
         }
 
-        return null;
+        return {
+            name: base.name,
+            pack: base.pack,
+            params: convertTypeToTypeParam(currentParams)
+        };
     }
 
-    private static function hasMatching(looking:Array<BaseType>, instanceParams:Array<Type>) {
-        if(looking.length != instanceParams.length) {
-            return false;
+    private static function getMatching(specialized:Array<Mask>, current:Array<BaseType>):ReturnValue<Array<BaseType>> {
+        if(specialized.length != current.length) {
+            return Invalid;
         }
 
-        for(i in 0...looking.length) {
-            if(!looking[i].equalsByName(instanceParams[i].toBaseType())) {
-                return false;
+        var ret:Array<BaseType> = [];
+        for(i in 0...specialized.length) {
+            var spe = specialized[i];
+            var cur = current[i];
+            switch(spe) {
+                case AnyType:
+                    ret.push(cur);
+                case Typed(t) if(!t.equalsByName(cur)):
+                    return Invalid;
+                default:
             }
         }
 
-        return true;
+        return Value(ret);
     }
 
-    private static function getInstanceParams():Array<Type> {
-        var type:Null<Type> = Context.getLocalType();
-        return switch(type) {
+    private static function getInstanceParams():Array<BaseType> {
+        return switch(Context.getLocalType()) {
             case TInst(_, p):
-                return p;
+                return p.map((t:Type) -> t.toBaseType());
             default:
                 return null;
         };
     }
 
-    private static function convertTypeToTypeParam(params:Array<Type>):Array<TypeParam> {
-        return params.map((t:Type) -> {
-            var baseType:BaseType = t.toBaseType();
-            return TPType(TPath({name:baseType.name, pack:baseType.pack}));
+    private static function convertTypeToTypeParam(params:Array<BaseType>):Array<TypeParam> {
+        return params.map((t:BaseType) -> {
+            return TPType(TPath({name:t.name, pack:t.pack}));
         });
     }
 
@@ -82,12 +102,12 @@ class Builder {
         for(other in others) {
             switch(other.expr) {
                 case EBinop(OpArrow, left, _.toBaseType() => specialization):
-                    var specialized:Array<BaseType> = [];
+                    var specialized:Array<Mask>;
                     switch(left.expr) {
-                        case EConst(CIdent(s)):
-                            specialized.push(s.toBaseType());
+                        case EConst(CIdent(_.toBaseType() => t)):
+                            specialized = [Typed(t)];
                         case EArrayDecl(values):
-                            specialized.append(values.toBaseType());
+                            specialized = toMask(values);
                         default:
 
                     }
@@ -98,5 +118,18 @@ class Builder {
         }
 
         return ret;
+    }
+
+    private static function toMask(values:Array<Expr>):Array<Mask> {
+        return values.map((e:Expr) -> {
+            return switch(e.expr) {
+                case EConst(CIdent("_")):
+                    AnyType;
+                case EConst(CIdent(_.toBaseType() => t)):
+                    Typed(t);
+                default:
+                    throw "Unmatched expression: " + e;
+            };
+        });
     }
 }
