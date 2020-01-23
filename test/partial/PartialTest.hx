@@ -19,4 +19,12 @@ class PartialTest {
         return TestUtil.testTypeEquality(specialized, generated);
     }
 
+    @:describe("Should use the Int,Int,Int specialization if Int,Int,Int is given")
+    public function useComplete() {
+        var specialized = new CompleteImplementation();
+        var generated = new TestInterface<Int, Int, Int>();
+
+        return TestUtil.testTypeEquality(specialized, generated);
+    }
+
 }
