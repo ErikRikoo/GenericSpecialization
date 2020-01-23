@@ -39,7 +39,7 @@ class CompleteImplementation implements BaseInterface<Int, Int>{
 }
 ```
 
-#####A partial specialization over Int as first parameter
+##### A partial specialization over Int as first parameter
 ```haxe
 class PartialImplemenation<U> implements BaseInterface<Int, U>{
     public function new() {}
