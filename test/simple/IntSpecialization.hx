@@ -1,6 +1,6 @@
-package;
+package simple;
 
-import TestInterface.BaseInterface;
+import simple.TestInterface.BaseInterface;
 
 class IntSpecialization implements BaseInterface<Int>{
     public function new() {}

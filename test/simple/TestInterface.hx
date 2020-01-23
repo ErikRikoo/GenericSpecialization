@@ -1,4 +1,4 @@
-package;
+package simple;
 
 @:genericBuild(Builder.build(
     BaseClass,

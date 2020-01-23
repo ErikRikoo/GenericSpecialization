@@ -1,6 +1,7 @@
-package ;
+package simple;
 
-import TestInterface.BaseInterface;
+
+import simple.TestInterface.BaseInterface;
 
 class BaseClass<T> implements BaseInterface<T> {
     public function new() {}
@@ -8,4 +9,5 @@ class BaseClass<T> implements BaseInterface<T> {
     public function foo(input:T):T  {
         return input;
     }
+
 }

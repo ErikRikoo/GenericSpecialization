@@ -10,7 +10,7 @@ import haxe.macro.Context;
 using Util;
 
 typedef SpecializationPair = {
-    specialized:BaseType,
+    specialized:Array<BaseType>,
     specialization:BaseType,
 }
 
@@ -20,7 +20,7 @@ class Builder {
         var baseClass:BaseType = base.toBaseType();
         var specializations:Array<SpecializationPair> = parseOthers(others);
 
-        var currentSpecialization:BaseType = getCurrentSpecialization(instanceParams[0], specializations);
+        var currentSpecialization:BaseType = getCurrentSpecialization(instanceParams, specializations);
         if(currentSpecialization == null) {
             currentSpecialization = baseClass;
         } else {
@@ -36,14 +36,28 @@ class Builder {
         return TPath(tpath);
     }
 
-    private static function getCurrentSpecialization(currentParams:Type, specializations:Array<SpecializationPair>):BaseType {
+    private static function getCurrentSpecialization(currentParams:Array<Type>, specializations:Array<SpecializationPair>):BaseType {
         for(pair in specializations) {
-            if(pair.specialized.equalsByName(currentParams.toBaseType())) {
+            if(hasMatching(pair.specialized, currentParams)) {
                 return pair.specialization;
             }
         }
 
         return null;
+    }
+
+    private static function hasMatching(looking:Array<BaseType>, instanceParams:Array<Type>) {
+        if(looking.length != instanceParams.length) {
+            return false;
+        }
+
+        for(i in 0...looking.length) {
+            if(!looking[i].equalsByName(instanceParams[i].toBaseType())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static function getInstanceParams():Array<Type> {
@@ -57,20 +71,27 @@ class Builder {
     }
 
     private static function convertTypeToTypeParam(params:Array<Type>):Array<TypeParam> {
-        var ret:Array<TypeParam> = [];
-        for(p in params) {
-            var type:BaseType = p.toBaseType();
-            ret.push(TPType(TPath({name:type.name, pack:type.pack})));
-        }
-
-        return ret;
+        return params.map((t:Type) -> {
+            var baseType:BaseType = t.toBaseType();
+            return TPType(TPath({name:baseType.name, pack:baseType.pack}));
+        });
     }
 
     private static function parseOthers(others:Array<Expr>):Array<SpecializationPair> {
         var ret = new Array<SpecializationPair>();
         for(other in others) {
             switch(other.expr) {
-                case EBinop(OpArrow, _.toBaseType() => specialized, _.toBaseType() => specialization):
+                case EBinop(OpArrow, left, _.toBaseType() => specialization):
+                    var specialized:Array<BaseType> = [];
+                    switch(left.expr) {
+                        case EConst(CIdent(s)):
+                            specialized.push(s.toBaseType());
+                        case EArrayDecl(values):
+                            specialized.append(values.toBaseType());
+                        default:
+
+                    }
+
                     ret.push({specialized: specialized, specialization: specialization});
                 default:
             }

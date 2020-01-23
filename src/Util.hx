@@ -8,6 +8,8 @@ import haxe.macro.Context;
 
 using Util.TypeUtil;
 using Util.ArrayUtil;
+using Util.StringUtil;
+using Util.ExprUtil;
 
 class Util {
 
@@ -26,6 +28,16 @@ class ArrayUtil {
         }
 
         return true;
+    }
+
+    public static function toBaseType(a:Array<Expr>) {
+        return a.map((e:Expr) -> e.toBaseType());
+    }
+
+    public static function append<T>(a:Array<T>, b:Array<T>) {
+        for(item in b) {
+            a.push(item);
+        }
     }
 }
 
@@ -65,7 +77,7 @@ class ExprUtil {
     public static function toBaseType(input:Expr):BaseType {
         switch(input.expr) {
             case EConst(CIdent(s)):
-                return Context.getType(s).toBaseType();
+                return s.toBaseType();
             default:
                 throw "The given expr is not an identifier, expr = " + input;
         }
@@ -76,5 +88,11 @@ class BaseTypeUtil {
     public static function equalsByName(self:BaseType, other:BaseType):Bool {
 
         return self.name == other.name && self.pack.deepEqual(other.pack);
+    }
+}
+
+class StringUtil {
+    public static function toBaseType(s:String):BaseType {
+        return Context.getType(s).toBaseType();
     }
 }
