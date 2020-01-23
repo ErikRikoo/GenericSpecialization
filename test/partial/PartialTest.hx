@@ -11,4 +11,12 @@ class PartialTest {
         return TestUtil.testTypeEquality(specialized, generated);
     }
 
+    @:describe("Should use the Int,_,_ specialization if Int,Type,Type is given")
+    public function usePartial1() {
+        var specialized = new PartialImplemenation1<Any, Any>();
+        var generated = new TestInterface<Int, Any, Any>();
+
+        return TestUtil.testTypeEquality(specialized, generated);
+    }
+
 }
